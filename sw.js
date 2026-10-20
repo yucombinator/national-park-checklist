@@ -1,7 +1,7 @@
 // Offline app shell. The checklist works with no signal;
 // map tiles are cached opportunistically after they have been viewed.
 
-const VERSION = "v4";
+const VERSION = "v5";
 const CACHE = `park-checklist-${VERSION}`;
 const DATA_CACHE = `park-checklist-data-${VERSION}`;
 

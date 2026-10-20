@@ -105,6 +105,8 @@ button:focus-visible {
 }
 
 .seg { display: flex; gap: 4px; }
+.seg.wrap { flex-wrap: wrap; }
+.seg.wrap button { flex: 1 1 45%; }
 
 .seg button {
   flex: 1;
@@ -392,6 +394,19 @@ button:focus-visible {
   border-color: var(--ca);
 }
 
+#detail .wish-btn {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  font: 600 12px/1 var(--sans);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+#detail .wish-btn:hover { border-color: #6d28d9; color: #6d28d9; }
+#detail .wish-btn.on { background: #a78bfa; border-color: #6d28d9; color: #fff; }
+
 .park-link {
   display: inline-block;
   margin-top: 10px;
@@ -434,6 +449,7 @@ button:focus-visible {
 .sw.us-open { background: #74c69d; border-color: #52b788; }
 .sw.ca-open { background: #8ecae6; border-color: #219ebc; }
 .sw.us-visited { background: var(--gold); border-color: var(--gold-dark); }
+.sw.wish { background: #a78bfa; border-color: #6d28d9; }
 .sw.ca-visited { background: var(--ca); border-color: var(--ca-dark); }
 .sw.dim { background: rgba(116,198,157,0.18); border-color: #d7e3dc; }
 .legend-row .sw + .sw { margin-left: 3px; }
@@ -638,6 +654,22 @@ button:focus-visible {
   color: #fff;
 }
 
+#list .c-wish { width: 40px; text-align: center; }
+
+.wish-add {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+  font: 600 14px/1 var(--sans);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wish-add:hover { border-color: #6d28d9; color: #6d28d9; }
+.wish-add.on { background: #a78bfa; border-color: #6d28d9; color: #fff; }
+
 /* ---------- map furniture ---------- */
 
 .leaflet-container { font: 13px/1.45 var(--sans); }
@@ -662,6 +694,14 @@ button:focus-visible {
   font-weight: 700;
 }
 .park-label.visited::before { content: "\2605 "; font-size: 10px; }
+
+.park-label.wish {
+  background: #ede9fe;
+  border-color: #6d28d9;
+  color: #4c1d95;
+  font-weight: 700;
+}
+.park-label.wish::before { content: "\2606 "; font-size: 10px; }
 
 .park-label.visited.ca {
   background: var(--ca);
@@ -849,7 +889,7 @@ footer {
   #list th, #list td { border: 1px solid #bbb; padding: 4px 6px; }
 
   #list .c-check { width: 28px; }
-  #list tr td:last-child { display: none; }
+  #list .c-wish, #list tr td:last-child { display: none; }
 
   .check-btn {
     width: 13px; height: 13px;

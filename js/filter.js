@@ -25,10 +25,12 @@ export function matchScore(props, state) {
 
 export function matches(props, state) {
   const visited = state.visited;
+  const wishlist = state.wishlist || new Set();
 
   if (state.country && state.country !== "all" && props.country !== state.country) return false;
   if (state.filter === "visited" && !visited.has(props.code)) return false;
   if (state.filter === "unvisited" && visited.has(props.code)) return false;
+  if (state.filter === "wishlist" && !wishlist.has(props.code)) return false;
 
   if (state.region && state.region !== "all" && props.region !== state.region) return false;
 

@@ -2,7 +2,18 @@
 
 import { initMap, setState, focusPark, fitVisible, fitMainland, showGateways, clearGateways, setBasemap, getMap } from "./map.js";
 import { detailHtml, escapeHtml, escapeAttr, driveLabel, serviceBadge } from "./park-data.js";
-import { getVisited, toggleVisited, setVisited, resetVisited, encodeVisited, decodeVisited } from "./store.js";
+import {
+  getVisited,
+  getWishlist,
+  toggleVisited,
+  toggleWishlist,
+  setVisited,
+  setWishlist,
+  resetVisited,
+  resetWishlist,
+  encodeMask,
+  decodeMask,
+} from "./store.js";
 import { matches, matchScore, haversineMi } from "./filter.js";
 
 const REGION_ORDER = [
@@ -24,6 +35,7 @@ const state = {
   region: "all",
   country: "all",
   visited: new Set(),
+  wishlist: new Set(),
 };
 
 const US_REGION_ORDER = [
@@ -40,6 +52,8 @@ const US_REGION_ORDER = [
 ];
 
 const CA_REGION_ORDER = ["Atlantic", "Quebec", "Ontario", "Prairies", "Pacific", "North"];
+
+const FILTERS = ["all", "visited", "wishlist", "unvisited"];
 
 let parks = [];
 let parksByCode = new Map();
@@ -71,6 +85,7 @@ function showToast(msg) {
 }
 
 function updateCounters() {
+  $("#wish-count").textContent = state.wishlist.size;
   const byCountry = { US: [0, 0], CA: [0, 0] };
   for (const park of parks) {
     const bucket = byCountry[park.country] || (byCountry[park.country] = [0, 0]);
@@ -97,6 +112,7 @@ function updateCounters() {
 
 function refresh() {
   state.visited = new Set(getVisited());
+  state.wishlist = new Set(getWishlist());
   setState(state);
   updateCounters();
   if (!$("#list").hidden) renderList();
@@ -132,7 +148,15 @@ function renderDetail(props) {
   el.prepend(closeBtn);
 
   el.querySelector(".toggle-btn").addEventListener("click", () => {
-    toggleVisited(props.code);
+    const nowVisited = toggleVisited(props.code);
+    // a park you have been to is no longer a park you want to go to
+    if (nowVisited) setWishlist(getWishlist().filter((code) => code !== props.code));
+    refresh();
+    renderDetail(parksByCode.get(props.code));
+  });
+
+  el.querySelector(".wish-btn").addEventListener("click", () => {
+    toggleWishlist(props.code);
     refresh();
     renderDetail(parksByCode.get(props.code));
   });
@@ -165,6 +189,7 @@ function gatewayCell(items, fmt) {
 
 function rowHtml(p) {
       const isV = state.visited.has(p.code);
+      const wished = state.wishlist.has(p.code);
       const cities = gatewayCell(
         p.nearby_cities,
         (c) => `${escapeHtml(c.name)} <span class="muted">${escapeHtml(driveLabel(c))}</span>`,
@@ -193,6 +218,10 @@ function rowHtml(p) {
         <td class="park-state">${escapeHtml(p.state_label)}</td>
         <td class="c-cities">${cities}</td>
         <td class="c-airports">${airports}</td>
+        <td class="c-wish">
+          <button class="wish-add ${wished ? "on" : ""}" data-code="${p.code}"
+            aria-pressed="${wished}" aria-label="${wished ? "Remove from" : "Add to"} wishlist">${wished ? "★" : "☆"}</button>
+        </td>
       </tr>`;
 }
 
@@ -220,11 +249,14 @@ function renderList() {
     .map((g) => {
       const [seen, total] = totals[g.country] || [0, 0];
       const label = g.country === "CA" ? "Canada" : "United States";
+      const wished = g.list.filter((p) => state.wishlist.has(p.code)).length;
       const head = `
         <tr class="group-row ${g.country === "CA" ? "ca" : "us"}">
-          <th colspan="6">
+          <th colspan="7">
             ${label}
-            <span class="group-count">${seen} of ${total} visited · ${g.list.length} shown</span>
+            <span class="group-count">${seen} of ${total} visited${
+              wished ? ` · ${wished} wishlisted` : ""
+            } · ${g.list.length} shown</span>
           </th>
         </tr>`;
       return head + g.list.map(rowHtml).join("");
@@ -257,13 +289,14 @@ function renderList() {
       <thead>
         <tr>
           <th class="c-check"><span class="sr-only">Visited</span></th>
+          <th class="c-wish"><span class="sr-only">Wishlist</span></th>
           <th>Park</th>
           <th>State</th>
           <th>Gateway towns</th>
           <th>Airports</th>
         </tr>
       </thead>
-      <tbody>${rows || `<tr><td colspan="6" class="empty">No parks match those filters.</td></tr>`}</tbody>
+      <tbody>${rows || `<tr><td colspan="7" class="empty">No parks match those filters.</td></tr>`}</tbody>
     </table>
   `;
 
@@ -298,6 +331,14 @@ function renderList() {
   el.querySelector("#sort").addEventListener("change", (e) => {
     state.sort = e.target.value;
     renderList();
+  });
+
+  el.querySelectorAll(".wish-add").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleWishlist(btn.dataset.code);
+      refresh();
+    });
   });
 
   el.querySelectorAll(".check-btn").forEach((btn) => {
@@ -379,7 +420,7 @@ function showCountry(country) {
 
 function showFilter(filter) {
   state.filter = filter;
-  for (const f of ["all", "visited", "unvisited"]) {
+  for (const f of FILTERS) {
     $(`#filter-${f}`).setAttribute("aria-pressed", String(f === filter));
   }
   refresh();
@@ -388,9 +429,10 @@ function showFilter(filter) {
 // ---------- share ----------
 
 function currentHash() {
+  const codes = parks.map((p) => p.code);
   const parts = [];
-  const token = encodeVisited(getVisited(), parks.map((p) => p.code));
-  if (token && getVisited().length) parts.push(`v=${token}`);
+  if (getVisited().length) parts.push(`v=${encodeMask(getVisited(), codes)}`);
+  if (getWishlist().length) parts.push(`w=${encodeMask(getWishlist(), codes)}`);
   if (openCode) parts.push(`p=${openCode}`);
   return parts.join("&");
 }
@@ -403,6 +445,7 @@ function writeHash() {
 async function share() {
   const hash = currentHash();
   const url = `${location.origin}${location.pathname}${hash ? `#${hash}` : ""}`;
+  writeHash();
   try {
     await navigator.clipboard.writeText(url);
     showToast("Link copied — opens with this checklist");
@@ -413,10 +456,11 @@ async function share() {
 
 function readHash() {
   const params = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const codes = parks.map((p) => p.code);
   const v = params.get("v");
-  if (v !== null) {
-    setVisited(decodeVisited(v, parks.map((p) => p.code)));
-  }
+  if (v !== null) setVisited(decodeMask(v, codes));
+  const w = params.get("w");
+  if (w !== null) setWishlist(decodeMask(w, codes));
   return params.get("p");
 }
 
@@ -449,7 +493,7 @@ async function main() {
     $(`#country-${c}`).addEventListener("click", () => showCountry(c));
   }
 
-  for (const f of ["all", "visited", "unvisited"]) {
+  for (const f of FILTERS) {
     $(`#filter-${f}`).addEventListener("click", () => showFilter(f));
   }
 
@@ -502,9 +546,10 @@ async function main() {
   });
 
   $("#reset").addEventListener("click", () => {
-    if (!getVisited().length) return;
-    if (!confirm("Clear every visited park?")) return;
+    if (!getVisited().length && !getWishlist().length) return;
+    if (!confirm("Clear visited parks and the wishlist?")) return;
     resetVisited();
+    resetWishlist();
     refresh();
   });
 

@@ -1,22 +1,44 @@
 // Park rendering: polygon styles and detail-card markup.
 
-import { isVisited } from "./store.js";
+import { isVisited, isWishlisted } from "./store.js";
 
 export const PALETTE = {
   US: { open: "#74c69d", openLine: "#52b788", visited: "#f59e0b", visitedLine: "#92400e" },
   CA: { open: "#8ecae6", openLine: "#219ebc", visited: "#d62828", visitedLine: "#8b1a1a" },
 };
 
+// Wishlist is one colour for both countries: "want to go" is not a country fact.
+export const WISH_FILL = "#a78bfa";
+export const WISH_LINE = "#6d28d9";
+
 export function parkStyle(feature) {
   const props = feature.properties;
-  const visited = isVisited(props.code);
   const palette = PALETTE[props.country] || PALETTE.US;
+
+  if (isVisited(props.code)) {
+    return {
+      fillColor: palette.visited,
+      weight: 2.5,
+      opacity: 1,
+      color: palette.visitedLine,
+      fillOpacity: 0.85,
+    };
+  }
+  if (isWishlisted(props.code)) {
+    return {
+      fillColor: WISH_FILL,
+      weight: 2,
+      opacity: 1,
+      color: WISH_LINE,
+      fillOpacity: 0.75,
+    };
+  }
   return {
-    fillColor: visited ? palette.visited : palette.open,
-    weight: visited ? 2.5 : 1.5,
+    fillColor: palette.open,
+    weight: 1.5,
     opacity: 1,
-    color: visited ? palette.visitedLine : palette.openLine,
-    fillOpacity: visited ? 0.85 : 0.7,
+    color: palette.openLine,
+    fillOpacity: 0.7,
   };
 }
 
@@ -61,6 +83,7 @@ export function driveLabel(g) {
 
 export function detailHtml(props) {
   const visited = isVisited(props.code);
+  const wished = isWishlisted(props.code);
 
   const cities = props.nearby_cities.length
     ? props.nearby_cities
@@ -112,6 +135,10 @@ export function detailHtml(props) {
     <div class="actions">
       <button class="toggle-btn ${visited ? "visited" : ""}${props.country === "CA" ? " ca" : ""}" data-code="${props.code}">
         ${visited ? "Mark unvisited" : "Mark visited"}
+      </button>
+      <button class="wish-btn ${wished ? "on" : ""}" data-code="${props.code}"
+        aria-pressed="${wished}">
+        ${wished ? "★ Wishlist" : "☆ Wishlist"}
       </button>
     </div>
     <a class="park-link" href="${escapeAttr(props.link)}" target="_blank" rel="noopener">

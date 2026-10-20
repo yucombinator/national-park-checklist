@@ -155,7 +155,9 @@ function renderDetail(props) {
     renderDetail(parksByCode.get(props.code));
   });
 
-  el.querySelector(".wish-btn").addEventListener("click", () => {
+  el.querySelector(".wish-btn")?.addEventListener("click", () => {
+    // a park you have already visited is not one you still want to visit
+    if (getVisited().includes(props.code)) return;
     toggleWishlist(props.code);
     refresh();
     renderDetail(parksByCode.get(props.code));
@@ -460,7 +462,10 @@ function readHash() {
   const v = params.get("v");
   if (v !== null) setVisited(decodeMask(v, codes));
   const w = params.get("w");
-  if (w !== null) setWishlist(decodeMask(w, codes));
+  if (w !== null) {
+    const visited = new Set(getVisited());
+    setWishlist(decodeMask(w, codes).filter((code) => !visited.has(code)));
+  }
   return params.get("p");
 }
 

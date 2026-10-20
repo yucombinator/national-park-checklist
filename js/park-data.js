@@ -136,10 +136,14 @@ export function detailHtml(props) {
       <button class="toggle-btn ${visited ? "visited" : ""}${props.country === "CA" ? " ca" : ""}" data-code="${props.code}">
         ${visited ? "Mark unvisited" : "Mark visited"}
       </button>
-      <button class="wish-btn ${wished ? "on" : ""}" data-code="${props.code}"
+      ${
+        visited
+          ? ""
+          : `<button class="wish-btn ${wished ? "on" : ""}" data-code="${props.code}"
         aria-pressed="${wished}">
         ${wished ? "★ Wishlist" : "☆ Wishlist"}
-      </button>
+      </button>`
+      }
     </div>
     <a class="park-link" href="${escapeAttr(props.link)}" target="_blank" rel="noopener">
       Plan your visit on nps.gov ↗

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>National Park Checklist — plan your trip</title>
-<meta name="description" content="All 63 US national parks on one map, with gateway towns, airports, drive times, entry rules and a trip planner.">
+<meta name="description" content="All 110 US and Canadian national parks on one map, with gateway towns, airports, drive times and entry rules. Tick off the ones you have seen.">
 <meta name="theme-color" content="#2d6a4f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -93,7 +93,6 @@
     </div>
 
     <div class="field actions-row">
-      <button id="trip-toggle" class="link-btn">Plan a trip</button>
       <button id="share-control" class="link-btn">Share</button>
       <button id="reset" class="link-btn">Reset</button>
     </div>
@@ -103,8 +102,6 @@
 <section id="detail" class="panel" aria-live="polite"></section>
 
 <section id="list" hidden aria-label="Parks list"></section>
-
-<section id="trip" class="panel" aria-live="polite" hidden></section>
 
 <details id="legend" class="panel" open>
   <summary>Legend</summary>
@@ -121,7 +118,7 @@
 <div id="toast" role="status" aria-live="polite"></div>
 
 <footer>
-  <p>Boundaries: NPS (simplified) · Airports: OurAirports · Towns: GeoNames · Drive times: OSRM. Checklist and trip stay in your browser.</p>
+  <p>Boundaries: NPS and Parks Canada (simplified) · Airports: OurAirports · Towns: GeoNames · Drive times: OSRM. Checklist stays in your browser.</p>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

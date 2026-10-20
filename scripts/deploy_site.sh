@@ -34,6 +34,7 @@ rsync -a --delete \
   --exclude '.git/' \
   --exclude 'tools/' \
   --exclude 'scripts/' \
+  --exclude 'data/drive.json' \
   --exclude 'node_modules/' \
   "$HERE/" "$DEST/"
 

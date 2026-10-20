@@ -1,10 +1,9 @@
-// Entry point: load data, wire map, list, search, filters, trip planner, share.
+// Entry point: load data, wire map, list, search, filters and share.
 
 import { initMap, setState, focusPark, fitVisible, fitMainland, showGateways, clearGateways, setBasemap, getMap } from "./map.js";
 import { detailHtml, escapeHtml, escapeAttr, driveLabel, serviceBadge } from "./park-data.js";
 import { getVisited, toggleVisited, setVisited, resetVisited, encodeVisited, decodeVisited } from "./store.js";
 import { matches, matchScore, haversineMi } from "./filter.js";
-import { planTrip, fmtDuration } from "./trip.js";
 
 const REGION_ORDER = [
   "Alaska",
@@ -42,11 +41,8 @@ const US_REGION_ORDER = [
 
 const CA_REGION_ORDER = ["Atlantic", "Quebec", "Ontario", "Prairies", "Pacific", "North"];
 
-const trip = { codes: [], open: false };
-
 let parks = [];
 let parksByCode = new Map();
-let matrix = null;
 let openCode = null;
 let restoreSearchFocus = false;
 let searchTimer = null;
@@ -97,7 +93,6 @@ function updateCounters() {
   $("#visited-count").textContent = state.visited.size;
   $("#progress-text").textContent =
     `${state.visited.size} visited · US ${byCountry.US[0]} of ${byCountry.US[1]} · Canada ${byCountry.CA[0]} of ${byCountry.CA[1]}`;
-  $("#trip-toggle").textContent = trip.codes.length ? `Trip (${trip.codes.length})` : "Plan a trip";
 }
 
 function refresh() {
@@ -123,7 +118,7 @@ function renderDetail(props) {
   }
 
   openCode = props.code;
-  el.innerHTML = detailHtml(props, { inTrip: trip.codes.includes(props.code) });
+  el.innerHTML = detailHtml(props);
   el.classList.add("open");
   document.body.classList.add("detail-open");
   showGateways(props);
@@ -140,118 +135,6 @@ function renderDetail(props) {
     toggleVisited(props.code);
     refresh();
     renderDetail(parksByCode.get(props.code));
-  });
-
-  el.querySelector(".trip-btn").addEventListener("click", () => {
-    toggleTrip(props.code);
-    renderDetail(parksByCode.get(props.code));
-  });
-}
-
-// ---------- trip ----------
-
-function toggleTrip(code) {
-  const i = trip.codes.indexOf(code);
-  if (i >= 0) trip.codes.splice(i, 1);
-  else trip.codes.push(code);
-  if (trip.codes.length) trip.open = true;
-  updateCounters();
-  renderTrip();
-  if (!$("#list").hidden) renderList();
-}
-
-function renderTrip() {
-  const el = $("#trip");
-  if (!trip.open && !trip.codes.length) {
-    el.hidden = true;
-    document.body.classList.remove("trip-open");
-    return;
-  }
-  el.hidden = false;
-  document.body.classList.add("trip-open");
-
-  if (!trip.codes.length) {
-    el.innerHTML = `
-      <div class="trip-head">
-        <h3>Trip planner</h3>
-        <button class="trip-close" aria-label="Close trip planner">&times;</button>
-      </div>
-      <p class="trip-empty">Add parks with <b>+ Trip</b> in the list or on a park card.</p>`;
-    el.querySelector(".trip-close").addEventListener("click", () => {
-      trip.open = false;
-      renderTrip();
-    });
-    return;
-  }
-
-  const plan = planTrip(trip.codes, matrix, parks);
-  const steps = [];
-  plan.order.forEach((code, i) => {
-    const park = parksByCode.get(code);
-    steps.push(`
-      <li class="stop">
-        <span class="n">${i + 1}</span>
-        <button class="stop-name" data-code="${code}">${escapeHtml(park?.name ?? code)}${
-          park ? `<span class="country-tag ${park.country === "CA" ? "ca" : "us"}">${park.country}</span>` : ""
-        }</button>
-        <button class="stop-remove" data-code="${code}" aria-label="Remove ${escapeAttr(park?.name ?? code)}">&times;</button>
-      </li>`);
-
-    const l = plan.legs[i];
-    if (l) {
-      const label = l.connected
-        ? `${fmtDuration(l.minutes)} · ${l.miles} mi`
-        : `no road route — fly`;
-      steps.push(`<li class="leg ${l.connected ? "" : "unrouted"}">${escapeHtml(label)}</li>`);
-    }
-  });
-
-  el.innerHTML = `
-    <div class="trip-head">
-      <h3>Trip · ${plan.order.length} parks</h3>
-      <button class="trip-close" aria-label="Close trip planner">&times;</button>
-    </div>
-    <ol class="trip-steps">${steps.join("")}</ol>
-    <div class="trip-total">
-      <span>Total</span>
-      <b>${fmtDuration(plan.totalMinutes)} · ${plan.totalMiles.toLocaleString()} mi</b>
-    </div>
-    ${plan.disconnected ? `<p class="trip-note">Some parks need a flight — those legs are excluded from the drive total.</p>` : ""}
-    <div class="trip-actions">
-      <button id="trip-show">Show on map</button>
-      <button id="trip-clear" class="link-btn">Clear trip</button>
-    </div>
-  `;
-
-  el.querySelector(".trip-close").addEventListener("click", () => {
-    trip.open = false;
-    renderTrip();
-  });
-  el.querySelector("#trip-clear").addEventListener("click", () => {
-    trip.codes = [];
-    trip.open = false;
-    updateCounters();
-    renderTrip();
-    if (!$("#list").hidden) renderList();
-    if (openCode) renderDetail(parksByCode.get(openCode));
-  });
-  el.querySelector("#trip-show").addEventListener("click", () => {
-    showView("map");
-    fitVisible(trip.codes.map((c) => parksByCode.get(c)).filter(Boolean));
-  });
-  el.querySelectorAll(".stop-name").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const park = parksByCode.get(btn.dataset.code);
-      showView("map");
-      focusPark(btn.dataset.code);
-      renderDetail(park);
-    });
-  });
-  el.querySelectorAll(".stop-remove").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      toggleTrip(btn.dataset.code);
-      renderDetail(openCode ? parksByCode.get(openCode) : null);
-    });
   });
 }
 
@@ -282,7 +165,6 @@ function gatewayCell(items, fmt) {
 
 function rowHtml(p) {
       const isV = state.visited.has(p.code);
-      const inTrip = trip.codes.includes(p.code);
       const cities = gatewayCell(
         p.nearby_cities,
         (c) => `${escapeHtml(c.name)} <span class="muted">${escapeHtml(driveLabel(c))}</span>`,
@@ -311,10 +193,6 @@ function rowHtml(p) {
         <td class="park-state">${escapeHtml(p.state_label)}</td>
         <td class="c-cities">${cities}</td>
         <td class="c-airports">${airports}</td>
-        <td class="c-trip">
-          <button class="trip-add ${inTrip ? "on" : ""}" data-code="${p.code}"
-            aria-pressed="${inTrip}" aria-label="${inTrip ? "Remove from" : "Add to"} trip">${inTrip ? "−" : "+"}</button>
-        </td>
       </tr>`;
 }
 
@@ -383,7 +261,6 @@ function renderList() {
           <th>State</th>
           <th>Gateway towns</th>
           <th>Airports</th>
-          <th class="c-trip"><span class="sr-only">Trip</span></th>
         </tr>
       </thead>
       <tbody>${rows || `<tr><td colspan="6" class="empty">No parks match those filters.</td></tr>`}</tbody>
@@ -428,13 +305,6 @@ function renderList() {
       e.stopPropagation();
       toggleVisited(btn.dataset.code);
       refresh();
-    });
-  });
-
-  el.querySelectorAll(".trip-add").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleTrip(btn.dataset.code);
     });
   });
 
@@ -550,35 +420,6 @@ function readHash() {
   return params.get("p");
 }
 
-// ---------- matrix ----------
-
-function syntheticMatrix(list) {
-  const codes = list.map((p) => p.code);
-  const duration_min = [];
-  const distance_mi = [];
-  for (let i = 0; i < list.length; i++) {
-    duration_min.push([]);
-    distance_mi.push([]);
-    for (let j = 0; j < list.length; j++) {
-      const a = list[i];
-      const b = list[j];
-      const mi = haversineMi(a.centroid[1], a.centroid[0], b.centroid[1], b.centroid[0]) * 1.2;
-      duration_min[i].push(Math.round((mi / 50) * 60));
-      distance_mi[i].push(Math.round(mi));
-    }
-  }
-  return { codes, duration_min, distance_mi, synthetic: true };
-}
-
-async function loadMatrix() {
-  try {
-    matrix = await loadJson("data/drive.json");
-  } catch {
-    matrix = syntheticMatrix(parks);
-    console.warn("drive.json unavailable — using straight-line estimates");
-  }
-}
-
 // ---------- boot ----------
 
 async function main() {
@@ -651,11 +492,6 @@ async function main() {
       .forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
   });
 
-  $("#trip-toggle").addEventListener("click", () => {
-    trip.open = !trip.open;
-    renderTrip();
-  });
-
   $("#share-control").addEventListener("click", share);
 
   $("#sheet-handle").addEventListener("click", () => {
@@ -682,8 +518,6 @@ async function main() {
   getMap().on("click", () => {
     if (openCode) renderDetail(null);
   });
-
-  await loadMatrix();
 
   if (deepLink && parksByCode.has(deepLink)) {
     focusPark(deepLink);

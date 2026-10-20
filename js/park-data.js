@@ -1,7 +1,6 @@
 // Park rendering: polygon styles and detail-card markup.
 
 import { isVisited } from "./store.js";
-import { fmtDuration } from "./trip.js";
 
 export const PALETTE = {
   US: { open: "#74c69d", openLine: "#52b788", visited: "#f59e0b", visitedLine: "#92400e" },
@@ -19,6 +18,15 @@ export function parkStyle(feature) {
     color: visited ? palette.visitedLine : palette.openLine,
     fillOpacity: visited ? 0.85 : 0.7,
   };
+}
+
+/** "1 h 12 min" from a minute count. */
+export function fmtDuration(minutes) {
+  if (minutes == null) return "—";
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h === 0) return `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
 }
 
 export const SERVICE_LABEL = {
@@ -51,9 +59,8 @@ export function driveLabel(g) {
   return "";
 }
 
-export function detailHtml(props, opts = {}) {
+export function detailHtml(props) {
   const visited = isVisited(props.code);
-  const inTrip = opts.inTrip;
 
   const cities = props.nearby_cities.length
     ? props.nearby_cities
@@ -105,9 +112,6 @@ export function detailHtml(props, opts = {}) {
     <div class="actions">
       <button class="toggle-btn ${visited ? "visited" : ""}${props.country === "CA" ? " ca" : ""}" data-code="${props.code}">
         ${visited ? "Mark unvisited" : "Mark visited"}
-      </button>
-      <button class="trip-btn ${inTrip ? "on" : ""}" data-code="${props.code}">
-        ${inTrip ? "− Trip" : "+ Trip"}
       </button>
     </div>
     <a class="park-link" href="${escapeAttr(props.link)}" target="_blank" rel="noopener">

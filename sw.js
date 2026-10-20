@@ -1,7 +1,7 @@
-// Offline app shell. Checklist and trip planning work with no signal;
+// Offline app shell. The checklist works with no signal;
 // map tiles are cached opportunistically after they have been viewed.
 
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = `park-checklist-${VERSION}`;
 const DATA_CACHE = `park-checklist-data-${VERSION}`;
 
@@ -14,7 +14,6 @@ const SHELL = [
   "js/park-data.js",
   "js/store.js",
   "js/filter.js",
-  "js/trip.js",
   "manifest.webmanifest",
   "icon.svg",
 ];

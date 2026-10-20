@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>National Park Checklist — plan your trip</title>
+<meta name="description" content="All 63 US national parks on one map, with gateway towns, airports, drive times, entry rules and a trip planner.">
+<meta name="theme-color" content="#2d6a4f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/park.css">
+</head>
+<body>
+
+<div id="map"></div>
+<div id="err" role="alert"></div>
+
+<header id="head" class="panel">
+  <h1>National Park Checklist</h1>
+  <p class="sub"><span id="park-count">110</span> parks across the US and Canada · <span id="visited-count">0</span> visited</p>
+</header>
+
+<section id="controls" class="panel" aria-label="Controls">
+  <button id="sheet-handle" class="sheet-handle" aria-expanded="false" aria-controls="sheet-more">
+    <span class="grab" aria-hidden="true"></span>
+    <span class="sheet-label">More options</span>
+  </button>
+
+  <div class="field progress-field">
+    <label>Progress</label>
+    <div class="prog-row">
+      <span class="prog-label us">US</span>
+      <div id="progress-bar-us" class="progress-bar" role="progressbar"
+        aria-label="US parks visited" aria-valuemin="0" aria-valuemax="63" aria-valuenow="0">
+        <div id="progress-fill-us"></div>
+      </div>
+      <span id="progress-text-us" class="prog-count">0 / 63</span>
+    </div>
+    <div class="prog-row">
+      <span class="prog-label ca">CA</span>
+      <div id="progress-bar-ca" class="progress-bar" role="progressbar"
+        aria-label="Canadian parks visited" aria-valuemin="0" aria-valuemax="47" aria-valuenow="0">
+        <div id="progress-fill-ca"></div>
+      </div>
+      <span id="progress-text-ca" class="prog-count">0 / 47</span>
+    </div>
+    <div id="progress-text" class="sr-only" aria-live="polite">0 visited</div>
+  </div>
+
+  <div class="field">
+    <label for="search">Find a park</label>
+    <input id="search" type="search" placeholder="Yosemite, Utah, Moab…" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="field">
+    <label>View</label>
+    <div class="seg">
+      <button id="view-map" aria-pressed="true">Map</button>
+      <button id="view-list" aria-pressed="false">List</button>
+    </div>
+  </div>
+
+  <div id="sheet-more">
+    <div class="field">
+      <label>Country</label>
+      <div class="seg">
+        <button id="country-all" aria-pressed="true">Both</button>
+        <button id="country-us" aria-pressed="false">US</button>
+        <button id="country-ca" aria-pressed="false">Canada</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Visited</label>
+      <div class="seg">
+        <button id="filter-all" aria-pressed="true">All</button>
+        <button id="filter-visited" aria-pressed="false">Yes</button>
+        <button id="filter-unvisited" aria-pressed="false">No</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label id="region-label">Region</label>
+      <div class="chips" id="region-chips" role="group" aria-labelledby="region-label"></div>
+    </div>
+
+    <div class="field">
+      <label>Basemap</label>
+      <div class="seg" id="base-seg">
+        <button data-base="light" aria-pressed="true">Light</button>
+        <button data-base="terrain" aria-pressed="false">Terrain</button>
+      </div>
+    </div>
+
+    <div class="field actions-row">
+      <button id="trip-toggle" class="link-btn">Plan a trip</button>
+      <button id="share-control" class="link-btn">Share</button>
+      <button id="reset" class="link-btn">Reset</button>
+    </div>
+  </div>
+</section>
+
+<section id="detail" class="panel" aria-live="polite"></section>
+
+<section id="list" hidden aria-label="Parks list"></section>
+
+<section id="trip" class="panel" aria-live="polite" hidden></section>
+
+<details id="legend" class="panel" open>
+  <summary>Legend</summary>
+  <div class="legend-row"><i class="sw us-open"></i><i class="sw ca-open"></i>Not visited</div>
+  <div class="legend-row"><i class="sw us-visited"></i><i class="sw ca-visited"></i>Visited</div>
+  <div class="legend-row"><i class="sw dim"></i>Filtered out</div>
+  <div class="legend-row"><i class="dot city"></i>Gateway town</div>
+  <div class="legend-row"><i class="dot air major"></i>Major hub</div>
+  <div class="legend-row"><i class="dot air regional"></i>Regional airport</div>
+  <div class="legend-row"><i class="dot air limited"></i>Limited service</div>
+  <p class="legend-note">Drive times are road distance from the park boundary. Limited service means a handful of flights a week or season-only.</p>
+</details>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<footer>
+  <p>Boundaries: NPS (simplified) · Airports: OurAirports · Towns: GeoNames · Drive times: OSRM. Checklist and trip stay in your browser.</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

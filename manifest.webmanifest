@@ -1,0 +1,18 @@
+{
+  "name": "National Park Checklist",
+  "short_name": "Park Checklist",
+  "description": "All 63 US national parks with gateway towns, airports, drive times and a trip planner.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef2ec",
+  "theme_color": "#2d6a4f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

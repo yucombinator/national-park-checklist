@@ -59,11 +59,15 @@ NE_ADMIN1_URL = (
     "geojson/ne_50m_admin_1_states_provinces.geojson"
 )
 
-# NPS types the 62 "National Parks" plainly, but New River Gorge carries the
-# preserve type because its unit is a park *and* preserve. Everything else in
-# that bucket (20 units) is a preserve without a park designation.
-PARK_CODES = None  # filled from NPS data
-EXTRA_PARK_CODES = {"NERI"}
+# NPS types most "National Parks" plainly. Two exceptions are carried by code:
+# New River Gorge is typed as a preserve (it is a park *and* preserve), and
+# Chiricahua was designated a park in October 2026 — the NPS boundary service
+# and nps.gov still describe the old monument, so its name is overridden here.
+EXTRA_PARK_CODES = {"NERI", "CHIR"}
+
+UNIT_NAME_OVERRIDES = {
+    "CHIR": "Chiricahua National Park",
+}
 
 US_TERRITORIES = ("US", "VI", "AS", "GU", "MP", "PR")
 GATEWAY_COUNTRIES = US_TERRITORIES + ("CA",)
@@ -200,7 +204,7 @@ REGIONS = {
     "Pacific Northwest": ["NOCA", "OLYM", "MORA", "CRLA"],
     "California": ["REDW", "LAVO", "YOSE", "SEQU", "KICA", "PINN", "JOTR", "DEVA", "CHIS"],
     "Southwest": ["GRCA", "ZION", "BRCA", "ARCH", "CANY", "CARE", "PEFO", "SAGU",
-                  "GUMO", "WHSA", "MEVE", "GRBA"],
+                  "GUMO", "WHSA", "MEVE", "GRBA", "CHIR"],
     "Rockies": ["ROMO", "GRTE", "YELL", "GLAC", "GRSA", "BLCA", "WICA", "THRO", "BADL"],
     "Plains & Midwest": ["VOYA", "ISRO", "INDU", "CUVA", "MAMM", "HOSP", "JEFF"],
     "South": ["SHEN", "GRSM", "CONG", "BIBE", "CAVE", "MACA"],
@@ -666,7 +670,7 @@ def build():
         states = state_codes(props.get("STATE"))
         permit, access_notes = ACCESS.get(code, ("", ""))
         units.append({
-            "name": props["UNIT_NAME"],
+            "name": UNIT_NAME_OVERRIDES.get(code, props["UNIT_NAME"]),
             "code": code,
             "country": "US",
             "region": region_of(code),
